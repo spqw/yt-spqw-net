@@ -1,0 +1,120 @@
+.page {
+  min-height: 100vh;
+  padding: 1rem;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 10% 10%, #f8e9d6 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, #c3ece7 0%, transparent 35%),
+    linear-gradient(160deg, #f9fbff 0%, #f3f6f8 100%);
+}
+
+.card {
+  width: min(100%, 30rem);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid #d9e3e8;
+  border-radius: 1.25rem;
+  box-shadow: 0 16px 42px rgba(27, 39, 44, 0.08);
+  padding: 1.2rem;
+  backdrop-filter: blur(6px);
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #2f7662;
+}
+
+h1 {
+  margin: 0.35rem 0 0;
+  color: #10232a;
+  font-size: 1.55rem;
+  line-height: 1.2;
+}
+
+.intro {
+  margin: 0.55rem 0 1rem;
+  color: #3f5158;
+  font-size: 0.96rem;
+}
+
+.form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+label {
+  font-size: 0.85rem;
+  color: #2f434a;
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  width: 100%;
+  border-radius: 0.8rem;
+  font-size: 1rem;
+}
+
+input,
+select {
+  border: 1px solid #c6d7df;
+  background: #ffffff;
+  padding: 0.78rem 0.88rem;
+  color: #17282f;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #3b9f95;
+  box-shadow: 0 0 0 3px rgba(59, 159, 149, 0.2);
+}
+
+button {
+  margin-top: 0.25rem;
+  border: 0;
+  background: linear-gradient(135deg, #10766f, #18936f);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.86rem 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.success,
+.error,
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+}
+
+.success {
+  color: #16653d;
+}
+
+.error {
+  color: #a02121;
+}
+
+.note {
+  color: #5f7279;
+}
+
+@media (min-width: 720px) {
+  .card {
+    padding: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+}
