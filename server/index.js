@@ -13,7 +13,7 @@ const PORT = Number(process.env.PORT || 3000);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const TEMP_DIR = path.join(ROOT_DIR, 'tmp-downloads');
-const RESOLUTIONS = new Set(['1080', '1440']);
+const QUALITY_OPTIONS = new Set(['360', '480', '720', '1080']);
 
 function isValidYouTubeUrl(input) {
   try {
@@ -25,12 +25,14 @@ function isValidYouTubeUrl(input) {
   }
 }
 
-function runYtDlp({ url, resolution }) {
+function runYtDlp({ url, quality }) {
   return new Promise((resolve, reject) => {
     const format = [
-      `bestvideo[height<=${resolution}][ext=mp4]+bestaudio[ext=m4a]`,
-      `bestvideo[height<=${resolution}]+bestaudio`,
-      `best[height<=${resolution}]`,
+      `bestvideo[vcodec*=avc1][height<=${quality}][ext=mp4]+bestaudio[acodec*=mp4a][ext=m4a]`,
+      `bestvideo[vcodec*=avc1][height<=${quality}]+bestaudio[acodec*=mp4a]`,
+      `bestvideo[height<=${quality}][ext=mp4]+bestaudio[ext=m4a]`,
+      `best[height<=${quality}][ext=mp4]`,
+      `best[height<=${quality}]`,
     ].join('/');
 
     const args = [
@@ -38,6 +40,7 @@ function runYtDlp({ url, resolution }) {
       '--no-warnings',
       '--merge-output-format',
       'mp4',
+      '--restrict-filenames',
       '--print',
       'after_move:filepath',
       '-f',
@@ -99,22 +102,22 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.post('/api/download', async (req, res) => {
-  const { url, resolution } = req.body || {};
+  const { url, quality } = req.body || {};
 
   if (typeof url !== 'string' || !isValidYouTubeUrl(url)) {
     res.status(400).json({ error: 'Please provide a valid YouTube URL.' });
     return;
   }
 
-  if (typeof resolution !== 'string' || !RESOLUTIONS.has(resolution)) {
-    res.status(400).json({ error: 'Resolution must be 1080 or 1440.' });
+  if (typeof quality !== 'string' || !QUALITY_OPTIONS.has(quality)) {
+    res.status(400).json({ error: 'Quality must be one of: 360, 480, 720, 1080.' });
     return;
   }
 
   let filePath = '';
   try {
     await ensureTempDir();
-    filePath = await runYtDlp({ url, resolution });
+    filePath = await runYtDlp({ url, quality });
 
     const fileName = path.basename(filePath).replace(/[^a-zA-Z0-9._-]+/g, '_');
     res.setHeader('Content-Type', 'video/mp4');

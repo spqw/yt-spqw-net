@@ -2,6 +2,12 @@ import { useMemo, useState } from 'react';
 import './App.css';
 
 const API_ENDPOINT = '/api/download';
+const QUALITY_OPTIONS = [
+  { value: '360', label: '360p (smallest file)' },
+  { value: '480', label: '480p' },
+  { value: '720', label: '720p (recommended for phones)' },
+  { value: '1080', label: '1080p (larger file)' },
+];
 
 function getFilenameFromDisposition(disposition) {
   if (!disposition) return 'video.mp4';
@@ -11,7 +17,7 @@ function getFilenameFromDisposition(disposition) {
 
 function App() {
   const [url, setUrl] = useState('');
-  const [resolution, setResolution] = useState('1080');
+  const [quality, setQuality] = useState('720');
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
 
@@ -30,7 +36,7 @@ function App() {
       const response = await fetch(API_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), resolution }),
+        body: JSON.stringify({ url: url.trim(), quality }),
       });
 
       if (!response.ok) {
@@ -62,8 +68,8 @@ function App() {
     <main className="page">
       <section className="card">
         <p className="eyebrow">YT Downloader</p>
-        <h1>Save YouTube Video in 1080p or 1440p</h1>
-        <p className="intro">Paste a link, choose quality, and download the MP4 with audio.</p>
+        <h1>Download YouTube Video as MP4</h1>
+        <p className="intro">Paste a link, choose quality, and save an Android-friendly video with audio.</p>
 
         <form className="form" onSubmit={onSubmit}>
           <label htmlFor="youtube-url">YouTube URL</label>
@@ -79,15 +85,18 @@ function App() {
             inputMode="url"
           />
 
-          <label htmlFor="resolution">Resolution</label>
+          <label htmlFor="quality">Quality</label>
           <select
-            id="resolution"
-            name="resolution"
-            value={resolution}
-            onChange={(event) => setResolution(event.target.value)}
+            id="quality"
+            name="quality"
+            value={quality}
+            onChange={(event) => setQuality(event.target.value)}
           >
-            <option value="1080">1080p</option>
-            <option value="1440">1440p</option>
+            {QUALITY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
 
           <button type="submit" disabled={isBusy}>
