@@ -13,7 +13,11 @@ const PORT = Number(process.env.PORT || 3000);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const TEMP_DIR = path.join(ROOT_DIR, 'tmp-downloads');
+const COOKIES_FILE = path.join(ROOT_DIR, '.yt-cookies.txt');
 const QUALITY_OPTIONS = new Set(['360', '480', '720', '1080']);
+const YTDLP_COOKIES_PATH = process.env.YTDLP_COOKIES_PATH?.trim() || '';
+const YTDLP_COOKIES_B64 = process.env.YTDLP_COOKIES_B64?.trim() || '';
+let activeCookiesPath = '';
 
 function isValidYouTubeUrl(input) {
   try {
@@ -38,6 +42,12 @@ function runYtDlp({ url, quality }) {
     const args = [
       '--no-playlist',
       '--no-warnings',
+      '--extractor-args',
+      'youtube:player_client=android,web',
+      '--user-agent',
+      'com.google.android.youtube/19.09.37 (Linux; U; Android 13) gzip',
+      '--add-header',
+      'Accept-Language:en-US,en;q=0.9',
       '--merge-output-format',
       'mp4',
       '--restrict-filenames',
@@ -49,6 +59,10 @@ function runYtDlp({ url, quality }) {
       path.join(TEMP_DIR, '%(title).80s-%(id)s.%(ext)s'),
       url,
     ];
+    if (activeCookiesPath) {
+      args.unshift(activeCookiesPath);
+      args.unshift('--cookies');
+    }
 
     const child = spawn('yt-dlp', args, {
       env: process.env,
@@ -94,6 +108,19 @@ async function ensureTempDir() {
   await fs.mkdir(TEMP_DIR, { recursive: true });
 }
 
+async function configureCookies() {
+  if (YTDLP_COOKIES_B64) {
+    const cookies = Buffer.from(YTDLP_COOKIES_B64, 'base64').toString('utf8');
+    await fs.writeFile(COOKIES_FILE, cookies, { mode: 0o600 });
+    activeCookiesPath = COOKIES_FILE;
+    return;
+  }
+
+  if (YTDLP_COOKIES_PATH) {
+    activeCookiesPath = YTDLP_COOKIES_PATH;
+  }
+}
+
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
@@ -133,7 +160,10 @@ async function handleDownload({ url, quality }, res) {
       }
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Download failed.';
+    const rawMessage = err instanceof Error ? err.message : 'Download failed.';
+    const message = rawMessage.includes('Sign in to confirm you’re not a bot')
+      ? 'YouTube requested bot verification for this video. Try another video, or configure server cookies for yt-dlp.'
+      : rawMessage;
     res.status(500).json({ error: message });
   }
 }
@@ -154,6 +184,12 @@ app.get(/.*/, (_req, res) => {
   res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`yt.spqw.net service running on port ${PORT}`);
-});
+configureCookies()
+  .catch((err) => {
+    console.error('Failed to configure yt-dlp cookies:', err);
+  })
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`yt.spqw.net service running on port ${PORT}`);
+    });
+  });
