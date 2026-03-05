@@ -9,12 +9,6 @@ const QUALITY_OPTIONS = [
   { value: '1080', label: '1080p (larger file)' },
 ];
 
-function getFilenameFromDisposition(disposition) {
-  if (!disposition) return 'video.mp4';
-  const match = disposition.match(/filename="?([^";]+)"?/i);
-  return match?.[1] || 'video.mp4';
-}
-
 function App() {
   const [url, setUrl] = useState('');
   const [quality, setQuality] = useState('720');
@@ -33,30 +27,8 @@ function App() {
     setStatus('downloading');
 
     try {
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), quality }),
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.error || 'Unable to download this video right now.');
-      }
-
-      const blob = await response.blob();
-      const disposition = response.headers.get('content-disposition');
-      const filename = getFilenameFromDisposition(disposition);
-      const objectUrl = URL.createObjectURL(blob);
-
-      const anchor = document.createElement('a');
-      anchor.href = objectUrl;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
-
+      const params = new URLSearchParams({ url: url.trim(), quality });
+      window.location.assign(`${API_ENDPOINT}?${params.toString()}`);
       setStatus('done');
     } catch (err) {
       setStatus('error');

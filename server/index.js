@@ -101,9 +101,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'yt-spqw-net' });
 });
 
-app.post('/api/download', async (req, res) => {
-  const { url, quality } = req.body || {};
-
+async function handleDownload({ url, quality }, res) {
   if (typeof url !== 'string' || !isValidYouTubeUrl(url)) {
     res.status(400).json({ error: 'Please provide a valid YouTube URL.' });
     return;
@@ -138,6 +136,17 @@ app.post('/api/download', async (req, res) => {
     const message = err instanceof Error ? err.message : 'Download failed.';
     res.status(500).json({ error: message });
   }
+}
+
+app.post('/api/download', async (req, res) => {
+  const { url, quality } = req.body || {};
+  await handleDownload({ url, quality }, res);
+});
+
+app.get('/api/download', async (req, res) => {
+  const url = typeof req.query.url === 'string' ? req.query.url : '';
+  const quality = typeof req.query.quality === 'string' ? req.query.quality : '';
+  await handleDownload({ url, quality }, res);
 });
 
 app.use(express.static(DIST_DIR));
